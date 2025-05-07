@@ -41,7 +41,7 @@ def run_zap_scan(url, domain_dir):
     print(f"➡️ Scanning: {url}")
 
     run_cmd([
-	"docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
+        "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
         "zap-baseline.py", "-t", url, "-r", "spider.html"
     ])
 
@@ -54,9 +54,9 @@ def run_zap_scan(url, domain_dir):
         print("⚠️ AJAX scan failed, skipping.")
 
     run_cmd([
-	"docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
+        "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
         "zap-full-scan.py", "-t", url, "-r", "active.html"
-   ])
+    ])
 
 def zip_reports():
     zip_path = os.path.join(WORKDIR, f"zap_scan_reports_{datetime.now().strftime('%Y%m%d')}.zip")
@@ -94,7 +94,10 @@ def send_email(zip_path):
 
 # Main Logic
 if __name__ == "__main__":
-    os.makedirs(WORKDIR, exist_ok=True)
+    # Ensure the working directory exists with correct permissions
+    if not os.path.exists(WORKDIR):
+        subprocess.run(['sudo', 'mkdir', '-p', WORKDIR], check=True)
+        subprocess.run(['sudo', 'chown', '-R', 'jenkins:jenkins', WORKDIR], check=True)
 
     target_urls = os.environ.get("CUSTOM_URLS")
     if target_urls:
@@ -113,4 +116,3 @@ if __name__ == "__main__":
     zip_file = zip_reports()
     send_email(zip_file)
     print("✅ All scans complete. Report emailed.")
-
