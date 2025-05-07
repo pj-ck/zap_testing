@@ -3,7 +3,6 @@ import subprocess
 import time
 import zipfile
 import smtplib
-import getpass  # ✅ NEW
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -11,34 +10,40 @@ from email.mime.text import MIMEText
 from email import encoders
 
 # Configuration
-WORKDIR = "/home/ec2-user/zap_reports"
+WORKDIR = "/tmp/zap_reports"  # Updated to /tmp to avoid permission issues
 DEFAULT_URLS = [
     "http://app.cloudkeeper.com",
     "http://auto.cloudkeeper.com",
     "http://gcp.cloudkeeper.com"
 ]
 
+# Email config (must match verified SES sender)
 EMAIL_FROM = "aditya.mishra@cloudkeeper.com"
 EMAIL_TO = "prerana@cloudkeeper.com"
 REPLY_TO = "aditya.mishra@cloudkeeper.com"
 
+# SMTP config
 SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
 SMTP_SERVER = "email-smtp.us-east-1.amazonaws.com"
 SMTP_PORT = 587
 
+# ZAP config
 ZAP_IMAGE = "ghcr.io/zaproxy/zaproxy:stable"
 
+# Helper Functions
 def run_cmd(cmd, check=True):
     print(f"🔧 Running: {' '.join(cmd)}")
     return subprocess.run(cmd, check=check)
 
 def run_zap_scan(url, domain_dir):
     print(f"➡️ Scanning: {url}")
+
     run_cmd([
         "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
         "zap-baseline.py", "-t", url, "-r", "spider.html"
     ])
+
     try:
         run_cmd([
             "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
@@ -46,6 +51,7 @@ def run_zap_scan(url, domain_dir):
         ])
     except subprocess.CalledProcessError:
         print("⚠️ AJAX scan failed, skipping.")
+
     run_cmd([
         "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
         "zap-full-scan.py", "-t", url, "-r", "active.html"
@@ -85,11 +91,9 @@ def send_email(zip_path):
         server.send_message(msg)
         print("✅ Email sent successfully.")
 
+# Main Logic
 if __name__ == "__main__":
-    current_user = getpass.getuser()  # ✅ NEW
-    if not os.path.exists(WORKDIR):
-        subprocess.run(['sudo', 'mkdir', '-p', WORKDIR], check=True)
-        subprocess.run(['sudo', 'chown', '-R', f'{current_user}:{current_user}', WORKDIR], check=True)  # ✅ UPDATED
+    os.makedirs(WORKDIR, exist_ok=True)
 
     target_urls = os.environ.get("CUSTOM_URLS")
     if target_urls:
