@@ -33,21 +33,22 @@ ZAP_IMAGE = "ghcr.io/zaproxy/zaproxy:stable"
 
 # Helper Functions
 def run_cmd(cmd):
+    print(f"\n📦 Running command: {' '.join(cmd)}")
     try:
         result = subprocess.run(
             cmd, check=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             universal_newlines=True
         )
+        print("✅ Command succeeded")
+        print("STDOUT:\n", result.stdout)
+        return result
     except subprocess.CalledProcessError as e:
-        print("ZAP scan failed.")
+        print("❌ Command failed")
         print("Return code:", e.returncode)
         print("STDOUT:\n", e.stdout)
         print("STDERR:\n", e.stderr)
         raise
-    return result
-
-
 
 def run_zap_scan(url, domain_dir):
     print(f"➡️ Scanning: {url}")
@@ -55,14 +56,14 @@ def run_zap_scan(url, domain_dir):
     # Run baseline scan
     run_cmd([
         "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
-        "zap-baseline.py", "-t", url, "-r", "spider.html"
+        "zap-baseline.py", "-d", "-t", url, "-r", "spider.html"
     ])
 
     try:
         # Run AJAX scan
         run_cmd([
             "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
-            "zap-api-scan.py", "-t", url, "-f", "openapi", "-r", "ajax.html"
+            "zap-api-scan.py", "-d", "-t", url, "-f", "openapi", "-r", "ajax.html"
         ])
     except subprocess.CalledProcessError:
         print("⚠️ AJAX scan failed, skipping.")
@@ -70,7 +71,7 @@ def run_zap_scan(url, domain_dir):
     # Run active scan
     run_cmd([
         "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
-        "zap-full-scan.py", "-t", url, "-r", "active.html"
+        "zap-full-scan.py", "-d", "-t", url, "-r", "active.html"
     ])
 
 def zip_reports():
@@ -85,7 +86,7 @@ def zip_reports():
     return zip_path
 
 def send_email(zip_path):
-    print("📧 Sending email using SMTP...")
+    print("\n📧 Sending email using SMTP...")
     msg = MIMEMultipart()
     msg['Subject'] = "ZAP Scan Reports"
     msg['From'] = EMAIL_FROM
@@ -123,7 +124,11 @@ if __name__ == "__main__":
         domain = url.split("//")[-1].split("/")[0].replace('.', '_')
         domain_dir = os.path.join(WORKDIR, domain)
         os.makedirs(domain_dir, exist_ok=True)
-        run_zap_scan(url, domain_dir)
+
+        try:
+            run_zap_scan(url, domain_dir)
+        except Exception as e:
+            print(f"⚠️ Skipping scan for {url} due to error: {e}")
 
     zip_file = zip_reports()
     send_email(zip_file)
