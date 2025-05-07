@@ -34,7 +34,7 @@ ZAP_IMAGE = "ghcr.io/zaproxy/zaproxy:stable"
 # Helper Functions
 def run_cmd(cmd, check=True):
     try:
-        result = subprocess.run(cmd, check=check, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(cmd, check=check, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         print("STDOUT:", result.stdout)
         print("STDERR:", result.stderr)
         return result
