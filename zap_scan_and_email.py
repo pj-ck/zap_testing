@@ -39,12 +39,14 @@ def run_cmd(cmd, check=True):
 def run_zap_scan(url, domain_dir):
     print(f"➡️ Scanning: {url}")
 
+    # Run baseline scan
     run_cmd([
         "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
         "zap-baseline.py", "-t", url, "-r", "spider.html"
     ])
 
     try:
+        # Run AJAX scan
         run_cmd([
             "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
             "zap-api-scan.py", "-t", url, "-f", "openapi", "-r", "ajax.html"
@@ -52,6 +54,7 @@ def run_zap_scan(url, domain_dir):
     except subprocess.CalledProcessError:
         print("⚠️ AJAX scan failed, skipping.")
 
+    # Run active scan
     run_cmd([
         "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
         "zap-full-scan.py", "-t", url, "-r", "active.html"
