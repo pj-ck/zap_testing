@@ -32,17 +32,21 @@ SMTP_PORT = 587
 ZAP_IMAGE = "ghcr.io/zaproxy/zaproxy:stable"
 
 # Helper Functions
-def run_cmd(cmd, check=True):
+def run_cmd(cmd):
     try:
-        result = subprocess.run(cmd, check=check, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        print("STDOUT:", result.stdout)
-        print("STDERR:", result.stderr)
-        return result
+        result = subprocess.run(
+            cmd, check=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True
+        )
     except subprocess.CalledProcessError as e:
-        print("Command failed with return code", e.returncode)
-        print("STDOUT:", e.stdout)
-        print("STDERR:", e.stderr)
+        print("ZAP scan failed.")
+        print("Return code:", e.returncode)
+        print("STDOUT:\n", e.stdout)
+        print("STDERR:\n", e.stderr)
         raise
+    return result
+
 
 
 def run_zap_scan(url, domain_dir):
