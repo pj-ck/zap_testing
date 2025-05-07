@@ -24,8 +24,8 @@ REPLY_TO = "aditya.mishra@cloudkeeper.com"
 
 
 # SMTP config
-SMTP_USERNAME = "AKIA6D6G6Z3UDKOONUN5"
-SMTP_PASSWORD = "BJCpYF0cg4woSk3wO25lsx/RwjISLUccM+S3Lbd5rXG2"
+SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
 SMTP_SERVER = "email-smtp.us-east-1.amazonaws.com"
 SMTP_PORT = 587
 
