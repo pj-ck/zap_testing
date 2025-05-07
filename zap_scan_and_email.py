@@ -10,14 +10,14 @@ from email.mime.text import MIMEText
 from email import encoders
 
 # Configuration
-WORKDIR = "/tmp/zap_reports"  # Updated to /tmp to avoid permission issues
+WORKDIR = "/tmp/zap_reports"
 DEFAULT_URLS = [
     "http://app.cloudkeeper.com",
     "http://auto.cloudkeeper.com",
     "http://gcp.cloudkeeper.com"
 ]
 
-# Email config (must match verified SES sender)
+# Email config
 EMAIL_FROM = "aditya.mishra@cloudkeeper.com"
 EMAIL_TO = "prerana@cloudkeeper.com"
 REPLY_TO = "aditya.mishra@cloudkeeper.com"
@@ -50,29 +50,40 @@ def run_cmd(cmd):
         print("STDERR:\n", e.stderr)
         raise
 
-def run_zap_scan(url, domain_dir):
-    print(f"➡️ Scanning: {url}")
+def run_zap_scan(url, domain_dir, domain):
+    print(f"\n➡️ Starting ZAP scans for: {url}")
 
     # Run baseline scan
-    run_cmd([
-        "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
-        "zap-baseline.py", "-d", "-t", url, "-r", "spider.html"
-    ])
-
     try:
-        # Run AJAX scan
+        print(f"🔍 Running baseline scan for {url}")
         run_cmd([
             "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
-            "zap-api-scan.py", "-d", "-t", url, "-f", "openapi", "-r", "ajax.html"
+            "zap-baseline.py", "-d", "-t", url, "-r", f"{domain}_baseline.html"
+        ])
+    except Exception as e:
+        print(f"❌ Baseline scan failed for {url}: {e}")
+
+    # Run AJAX scan
+    try:
+        print(f"🕷️ Running AJAX scan for {url}")
+        run_cmd([
+            "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
+            "zap-api-scan.py", "-d", "-t", url, "-f", "openapi", "-r", f"{domain}_ajax.html"
         ])
     except subprocess.CalledProcessError:
-        print("⚠️ AJAX scan failed, skipping.")
+        print(f"⚠️ AJAX scan failed for {url}, skipping.")
 
     # Run active scan
-    run_cmd([
-        "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
-        "zap-full-scan.py", "-d", "-t", url, "-r", "active.html"
-    ])
+    try:
+        print(f"💥 Running active scan for {url}")
+        run_cmd([
+            "docker", "run", "-v", f"{domain_dir}:/zap/wrk/:rw", "--rm", "-t", ZAP_IMAGE,
+            "zap-full-scan.py", "-d", "-t", url, "-r", f"{domain}_active.html"
+        ])
+    except Exception as e:
+        print(f"❌ Active scan failed for {url}: {e}")
+
+    print(f"✅ Completed all scans for {url}")
 
 def zip_reports():
     zip_path = os.path.join(WORKDIR, f"zap_scan_reports_{datetime.now().strftime('%Y%m%d')}.zip")
@@ -126,7 +137,7 @@ if __name__ == "__main__":
         os.makedirs(domain_dir, exist_ok=True)
 
         try:
-            run_zap_scan(url, domain_dir)
+            run_zap_scan(url, domain_dir, domain)
         except Exception as e:
             print(f"⚠️ Skipping scan for {url} due to error: {e}")
 
