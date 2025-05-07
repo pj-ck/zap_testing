@@ -33,8 +33,17 @@ ZAP_IMAGE = "ghcr.io/zaproxy/zaproxy:stable"
 
 # Helper Functions
 def run_cmd(cmd, check=True):
-    print(f"🔧 Running: {' '.join(cmd)}")
-    return subprocess.run(cmd, check=check)
+    try:
+        result = subprocess.run(cmd, check=check, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        print("STDOUT:", result.stdout)
+        print("STDERR:", result.stderr)
+        return result
+    except subprocess.CalledProcessError as e:
+        print("Command failed with return code", e.returncode)
+        print("STDOUT:", e.stdout)
+        print("STDERR:", e.stderr)
+        raise
+
 
 def run_zap_scan(url, domain_dir):
     print(f"➡️ Scanning: {url}")
