@@ -99,25 +99,47 @@ def zip_reports():
 def send_email(zip_path):
     print("\n📧 Sending email using SMTP...")
     msg = MIMEMultipart()
-    msg['Subject'] = "ZAP Scan Reports"
+    msg['Subject'] = f"ZAP Security Scan Report – {datetime.now().strftime('%d-%b-%Y')}"
     msg['From'] = EMAIL_FROM
     msg['To'] = EMAIL_TO
     msg.add_header('Reply-To', REPLY_TO)
 
-    msg.attach(MIMEText("Attached are the consolidated ZAP scan reports for today.", 'plain'))
+    # HTML body
+    body = """
+    <p>Dear Team,</p>
+    <p>Please find attached the <strong>ZAP security scan reports</strong> conducted on the following target applications:</p>
+    <ol>
+        <li><strong>Baseline Scan</strong> – A passive scan identifying common vulnerabilities without affecting the application.</li>
+        <li><strong>AJAX Scan</strong> – Crawls dynamic content and performs security testing on modern web apps.</li>
+        <li><strong>Active Scan</strong> – A comprehensive scan that actively tests for security issues.</li>
+    </ol>
+    <p>These reports help ensure that our applications are aligned with best practices in web application security.</p>
+    <p>For more information on OWASP ZAP, please visit: <a href="https://www.zaproxy.org/">https://www.zaproxy.org/</a></p>
+    <p><strong>Note</strong>: Kindly review the results and follow up on any critical findings.</p>
+    <br>
+    <p>Warm Regards,</p>
+    <p><strong>Aditya Mishra</strong><br>
+    DevOps Engineer<br><br>
+    <strong>CloudKeeper</strong> | <a href="https://www.cloudkeeper.com">www.cloudkeeper.com</a></p>
+    """
 
+    msg.attach(MIMEText(body, 'html'))
+
+    # Attach zip file
     with open(zip_path, 'rb') as f:
         part = MIMEBase('application', 'zip')
         part.set_payload(f.read())
         encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f'attachment; filename=' + os.path.basename(zip_path))
+        part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(zip_path)}')
         msg.attach(part)
 
+    # Send email
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
         server.starttls()
         server.login(SMTP_USERNAME, SMTP_PASSWORD)
         server.send_message(msg)
         print("✅ Email sent successfully.")
+
 
 # Main Logic
 if __name__ == "__main__":
