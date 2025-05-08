@@ -106,16 +106,13 @@ def send_email(zip_path):
 
     # HTML body
     body = """
-    <p>Dear Team,</p>
-    <p>Please find attached the <strong>ZAP security scan reports</strong> conducted on the following target applications:</p>
+    <p>Hi Team,</p>
+    <p>Please find attached the <strong>ZAP security scan reports</strong> conducted on the following target scans:</p>
     <ol>
-        <li><strong>Baseline Scan</strong> – A passive scan identifying common vulnerabilities without affecting the application.</li>
-        <li><strong>AJAX Scan</strong> – Crawls dynamic content and performs security testing on modern web apps.</li>
-        <li><strong>Active Scan</strong> – A comprehensive scan that actively tests for security issues.</li>
+        <li><strong>Baseline Scan</strong></li>
+        <li><strong>AJAX Scan</strong></li>
+        <li><strong>Active Scan</strong></li>
     </ol>
-    <p>These reports help ensure that our applications are aligned with best practices in web application security.</p>
-    <p>For more information on OWASP ZAP, please visit: <a href="https://www.zaproxy.org/">https://www.zaproxy.org/</a></p>
-    <p><strong>Note</strong>: Kindly review the results and follow up on any critical findings.</p>
     <br>
     <p>Warm Regards,</p>
     <p><strong>Aditya Mishra</strong><br>
