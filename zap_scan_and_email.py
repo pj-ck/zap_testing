@@ -19,7 +19,7 @@ DEFAULT_URLS = [
 
 # Email config
 EMAIL_FROM = "aditya.mishra@cloudkeeper.com"
-EMAIL_TO = "prerana@cloudkeeper.com, akshit.mahajan1@cloudkeeper.com, sumit.kumar@cloudkeeper.com"
+EMAIL_TO = "prerana@cloudkeeper.com"
 REPLY_TO = "aditya.mishra@cloudkeeper.com"
 
 # SMTP config
@@ -96,7 +96,7 @@ def zip_reports():
                     zipf.write(full_path, arcname)
     return zip_path
 
-def send_email(zip_path):
+def send_email(zip_path, scanned_urls):
     print("\n📧 Sending email using SMTP...")
     msg = MIMEMultipart()
     msg['Subject'] = f"ZAP Security Scan Report – {datetime.now().strftime('%d-%b-%Y')}"
@@ -104,10 +104,16 @@ def send_email(zip_path):
     msg['To'] = EMAIL_TO
     msg.add_header('Reply-To', REPLY_TO)
 
-    # HTML body
-    body = """
+    # Dynamically build the scanned URL list
+    url_list_html = ''.join(f"<li>{url}</li>" for url in scanned_urls)
+
+    # HTML body with URL list
+    body = f"""
     <p>Hi Team,</p>
     <p>Please find attached the <strong>ZAP security scan reports</strong> conducted on the following target scans:</p>
+    <ul>
+        {url_list_html}
+    </ul>
     <ol>
         <li><strong>Baseline Scan</strong></li>
         <li><strong>AJAX Scan</strong></li>
@@ -137,7 +143,6 @@ def send_email(zip_path):
         server.send_message(msg)
         print("✅ Email sent successfully.")
 
-
 # Main Logic
 if __name__ == "__main__":
     os.makedirs(WORKDIR, exist_ok=True)
@@ -150,6 +155,8 @@ if __name__ == "__main__":
         TARGET_URLS = DEFAULT_URLS
         print("ℹ️ Using default URL list.")
 
+    scanned_urls = []
+
     for url in TARGET_URLS:
         domain = url.split("//")[-1].split("/")[0].replace('.', '_')
         domain_dir = os.path.join(WORKDIR, domain)
@@ -157,9 +164,10 @@ if __name__ == "__main__":
 
         try:
             run_zap_scan(url, domain_dir, domain)
+            scanned_urls.append(url)
         except Exception as e:
             print(f"⚠️ Skipping scan for {url} due to error: {e}")
 
     zip_file = zip_reports()
-    send_email(zip_file)
+    send_email(zip_file, scanned_urls)
     print("✅ All scans complete. Report emailed.")
