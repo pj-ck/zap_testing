@@ -107,7 +107,7 @@ def send_email(zip_path, scanned_urls):
     # Dynamically build the scanned URL list
     url_list_html = ''.join(f"<li>{url}</li>" for url in scanned_urls)
 
-    # HTML body with corrected message
+    # HTML body
     body = f"""
     <p>Hi Team,</p>
     <p>Please find attached the <strong>ZAP security scan reports</strong> for the following target URLs:</p>
@@ -126,10 +126,9 @@ def send_email(zip_path, scanned_urls):
     DevOps Engineer<br><br>
     <strong>CloudKeeper</strong> | <a href="https://www.cloudkeeper.com">www.cloudkeeper.com</a></p>
     """
-
     msg.attach(MIMEText(body, 'html'))
 
-    # Attach zip file
+    # Attach zip
     with open(zip_path, 'rb') as f:
         part = MIMEBase('application', 'zip')
         part.set_payload(f.read())
@@ -146,15 +145,24 @@ def send_email(zip_path, scanned_urls):
 
 # Main Logic
 if __name__ == "__main__":
-    os.makedirs(WORKDIR, exist_ok=True)
+    # Clean up the WORKDIR before scanning
+    if os.path.exists(WORKDIR):
+        for root, dirs, files in os.walk(WORKDIR, topdown=False):
+            for file in files:
+                os.remove(os.path.join(root, file))
+            for dir in dirs:
+                os.rmdir(os.path.join(root, dir))
+    else:
+        os.makedirs(WORKDIR)
 
-    target_urls = os.environ.get("CUSTOM_URLS")
-    if target_urls:
-        TARGET_URLS = target_urls.split(',')
+    # Load custom URLs if provided
+    target_urls_env = os.environ.get("CUSTOM_URLS")
+    if target_urls_env:
+        TARGET_URLS = [url.strip() for url in target_urls_env.split(',') if url.strip()]
         print(f"🛠️ Using CUSTOM_URLS: {TARGET_URLS}")
     else:
         TARGET_URLS = DEFAULT_URLS
-        print("ℹ️ Using default URL list.")
+        print(f"ℹ️ Using DEFAULT_URLS: {TARGET_URLS}")
 
     scanned_urls = []
 
