@@ -19,7 +19,7 @@ DEFAULT_URLS = [
 
 # Email config
 EMAIL_FROM = "aditya.mishra@cloudkeeper.com"
-EMAIL_TO = "akshit.mahajan1@cloudkeeper.com, sumit.kumar@cloudkeeper.com"
+EMAIL_TO = "prerana@cloudkeeper.com, akshit.mahajan1@cloudkeeper.com, sumit.kumar@cloudkeeper.com"
 REPLY_TO = "aditya.mishra@cloudkeeper.com"
 
 # SMTP config
