@@ -110,7 +110,7 @@ def send_email(zip_path, scanned_urls):
     # HTML body
     body = f"""
     <p>Hi Team,</p>
-    <p>Please find attached the <strong>ZAP security scan reports</strong> for the following target URLs:</p>
+    <p>Please find attached <strong>ZAP security scan reports</strong> for the following target URLs:</p>
     <ul>
         {url_list_html}
     </ul>
