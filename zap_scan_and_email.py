@@ -107,13 +107,14 @@ def send_email(zip_path, scanned_urls):
     # Dynamically build the scanned URL list
     url_list_html = ''.join(f"<li>{url}</li>" for url in scanned_urls)
 
-    # HTML body with URL list
+    # HTML body with corrected message
     body = f"""
     <p>Hi Team,</p>
-    <p>Please find attached the <strong>ZAP security scan reports</strong> conducted on the following target scans:</p>
+    <p>Please find attached the <strong>ZAP security scan reports</strong> for the following target URLs:</p>
     <ul>
         {url_list_html}
     </ul>
+    <p>The following scans were performed on each of the above URLs:</p>
     <ol>
         <li><strong>Baseline Scan</strong></li>
         <li><strong>AJAX Scan</strong></li>
